@@ -1,5 +1,6 @@
 const Task = require('./Task')
 const createStore = require('./store')
+const Renderer = require('./Renderer')
 const ParallelMap = require('p-map')
 
 class Noladius {
@@ -8,6 +9,7 @@ class Noladius {
     this.tasks = []
     this.concurrency = 1
     this.throws = true
+    this.renderer = new Renderer(this)
 
     this.callIfAvailable(this.setThrows, 'throws', options)
     this.callIfAvailable(this.setConcurrency, 'concurrency', options)
@@ -75,7 +77,11 @@ class Noladius {
       }
     )
 
+    // renderer.run()
+
     return stream.then(results => {
+      // renderer.end()
+
       const errors = results.filter(result => result instanceof Error)
       if (errors.length > 0) {
         const error = new Error('An error has occurred')
