@@ -1,80 +1,173 @@
+const R = require('ramda')
 const { isPromise } = require('./utils/promise')
 
-const runAction = (action, store) => {
-  if (action) {
-    const result = action(store.getState())
-    if (isPromise(result)) {
-      return result
-    }
-    return Promise.resolve(result)
-  }
-
-  return Promise.resolve()
-}
-
 class Task {
-  constructor(options) {
-    if (typeof options !== 'object') {
-      throw new TypeError('Options must be a `object`')
+  constructor(computation, cleanup) {
+    this.fork = computation
+
+    this.cleanup = cleanup
+  }
+
+  map(f) {
+    const computation = (reject, resolve) => this.fork(
+      reject,
+      ([payload1, actions1]) => {
+        resolve([f(payload1), actions1])
+      }
+    )
+
+    return new Task(computation, this.cleanup)
+  }
+
+  chain(f) {
+    const computation = (reject, resolve) => this.fork(
+      reject,
+      ([payload1, actions1]) => {
+        f(payload1).fork(
+          reject,
+          ([payload2, actions2]) => {
+            resolve([payload2, actions1.concat(actions2)])
+          }
+        )
+      }
+    )
+
+    return new Task(computation, this.cleanup)
+  }
+
+  ap(b) {
+    return this.chain(a => b.map(a))
+  }
+
+  tell(action2) {
+    const computation = (reject, resolve) => this.fork(
+      reject,
+      ([payload1, action1]) => {
+        resolve([payload1, action1.concat(action2)])
+      }
+    )
+
+    return new Task(computation, this.cleanup)
+  }
+
+  concat(that) {
+    const cleanupBoth = () => {
+      if (this.cleanup) {
+        this.cleanup()
+      }
+      if (that.cleanup) {
+        that.cleanup()
+      }
     }
 
-    this.title = options.title
-    this.execute = options.execute
-    this.before = options.before
-    this.after = options.after
-    this.enabled = options.enabled
+    const computation = (reject, resolve) => {
+      let resolved = false
+      let resolvedResult
+      let rejected = false
+      let rejectedError
 
-    this.state = Task.State.INIT
-  }
-
-  setState(state) {
-    console.log(`${this.title} [${state}]`)
-
-    this.state = state
-  }
-
-  isEnabled() {
-    return !this.enabled || this.enabled()
-  }
-
-  run(store, throws) {
-    this.setState(Task.State.START)
-
-    return runAction(this.before, store)
-      .then(result => {
-        store.setState(result)
-
-        return runAction(this.execute, store)
-      })
-      .then(result => {
-        store.setState(result)
-
-        return runAction(this.after, store)
-      })
-      .then(result => {
-        store.setState(result)
-
-        this.setState(Task.State.COMPLETE)
-      })
-      .catch(error => {
-        this.setState(Task.State.FAILED)
-        console.log(` - ${error.message}`)
-
-        if (throws) {
-          throw error
+      const rejectWrapper = error => {
+        if (rejected) {
+          reject([error, rejectedError])
+        } else if (resolved) {
+          reject(error)
+        } else {
+          rejectedError = error
+          rejected = true
         }
-        return error
-      })
+      }
+
+      const resultMapper = ([payload1, actions1], [payload2, actions2]) => ([
+        [payload1, payload2], actions1.concat(actions2),
+      ])
+
+      const createResolveWrapper = mapper => result => {
+        if (rejected) {
+          reject(rejectedError)
+        } else if (resolved) {
+          resolve(mapper(result, resolvedResult))
+        } else {
+          resolved = true
+          resolvedResult = result
+        }
+      }
+
+      this.fork(
+        rejectWrapper,
+        createResolveWrapper(resultMapper)
+      )
+
+      that.fork(
+        rejectWrapper,
+        createResolveWrapper(R.flip(resultMapper))
+      )
+    }
+
+    return new Task(computation, cleanupBoth)
+  }
+
+  orElse(f) {
+    const computation = (reject, resolve) => this.fork(
+      error => f(error).fork(reject, resolve),
+      resolve
+    )
+
+    return new Task(computation, this.cleanup)
+  }
+
+  fold(f, g) {
+    const computation = (reject, resolve) => this.fork(
+      error => resolve(g(error)),
+      result => resolve(f(result))
+    )
+
+    return new Task(computation, this.cleanup)
+  }
+
+  bimap(f, g) {
+    const computation = (reject, resolve) => this.fork(
+      error => reject(g(error)),
+      result => resolve(f(result))
+    )
+
+    return new Task(computation, this.cleanup)
+  }
+
+  rejectedMap(f) {
+    const computation = (reject, resolve) => this.fork(
+      error => reject(f(error)),
+      resolve
+    )
+
+    return new Task(computation, this.cleanup)
   }
 }
 
-Task.State = {
-  INIT: 'INIT',
-  START: 'START',
-  FAILED: 'FAILED',
-  COMPLETE: 'COMPLETE',
-}
+Task.result = (payload, actions = []) => ([payload, actions])
 
-Task.create = task => task instanceof Task ? task : new Task(task)
+Task.actions = (actions = []) => new Task((reject, resolve) => {
+  resolve([null, [].concat(actions)])
+})
+
+Task.of = (value, actions) => new Task((reject, resolve) => {
+  if (isPromise(value)) {
+    value.then(R.compose(resolve, Task.result), reject)
+  } else {
+    resolve(Task.result(value, actions))
+  }
+})
+
+Task.reject = error => new Task(reject => {
+  reject(error)
+})
+
+Task.empty = () => new Task(() => false)
+
+Task.trace = R.curry((tag, x) => {
+  console.log(tag, x)
+  return x
+})
+
+Task.prototype.toString = () => 'Task'
 
 module.exports = Task
