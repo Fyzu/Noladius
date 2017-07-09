@@ -34,7 +34,7 @@
     }
   },
   "dependencies": {
-    "p-map": "^1.1.1"
+    "p-map": "^1.1.1",
     "ansi-escapes": "^2.0.0",
     "cli-cursor": "^2.1.0",
     "elegant-spinner": "^1.0.1",
