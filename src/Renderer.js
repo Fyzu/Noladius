@@ -1,4 +1,4 @@
-const createScreen = require('./utils/screen')
+const createScreen = require('screen-render')
 const Task = require('./Task')
 const indentString = require('indent-string')
 const chalk = require('chalk')
