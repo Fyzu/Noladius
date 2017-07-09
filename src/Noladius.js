@@ -1,13 +1,29 @@
-const Task = require('./Task')
-const createStore = require('./store')
+const TaskWrapper = require('./TaskWrapper')
+const { createStore } = require('./store')
 const ParallelMap = require('p-map')
+
+const findErrors = array => array.reduce((errors, element) => {
+  if (element instanceof Error) {
+    errors.push(element)
+  } else if (Array.isArray(element)) {
+    element.forEach(part => {
+      if (part instanceof Error) {
+        errors.push(part)
+      }
+    })
+  }
+  return errors
+}, [])
 
 class Noladius {
   constructor(options = {}) {
     this.store = null
     this.tasks = []
     this.concurrency = 1
-    this.throws = true
+
+    this.options = {
+      throws: true,
+    }
 
     this.callIfAvailable(this.setThrows, 'throws', options)
     this.callIfAvailable(this.setConcurrency, 'concurrency', options)
@@ -26,15 +42,8 @@ class Noladius {
     }
   }
 
-  add(...taskArgs) {
-    this.tasks = this.tasks.concat(taskArgs.reduce((result, arg) => {
-      if (Array.isArray(arg)) {
-        arg.forEach(task => result.push(Task.create(task)))
-      } else {
-        result.push(Task.create(arg))
-      }
-      return result
-    }, []))
+  add(...tasks) {
+    this.tasks = tasks.reduce((result, task) => result.concat(task), this.tasks)
   }
 
   setStore(store) {
@@ -56,27 +65,24 @@ class Noladius {
   }
 
   setThrows(throws) {
-    this.throws = throws
+    this.options.throws = throws
   }
 
   run() {
-    const { concurrency, tasks, store, throws } = this
+    const { concurrency, store, options } = this
+
+    const tasks = this.tasks.map(TaskWrapper.of)
 
     const stream = ParallelMap(
       tasks,
-      task => {
-        if (task.isEnabled()) {
-          return task.run(store, throws)
-        }
-        return Promise.resolve()
-      },
+      task => task.run(store, options),
       {
         concurrency,
       }
     )
 
     return stream.then(results => {
-      const errors = results.filter(result => result instanceof Error)
+      const errors = findErrors(results)
       if (errors.length > 0) {
         const error = new Error('An error has occurred')
         error.errors = errors

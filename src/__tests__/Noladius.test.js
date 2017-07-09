@@ -1,9 +1,10 @@
 jest.resetAllMocks()
 jest.resetModules()
 
+const R = require.requireActual('ramda')
 const Noladius = require.requireActual('../Noladius')
 const Task = require.requireActual('../Task')
-const createStore = require.requireActual('../store')
+const { createStore } = require.requireActual('../store')
 
 describe('noladius', () => {
   let originalConsoleLog
@@ -19,9 +20,9 @@ describe('noladius', () => {
   })
 
   beforeEach(() => {
-    // Object.defineProperty(console, 'log', {
-    //   value: jest.fn(),
-    // })
+    Object.defineProperty(console, 'log', {
+      value: jest.fn(),
+    })
   })
 
   it('should create instance', () => {
@@ -33,7 +34,7 @@ describe('noladius', () => {
   it('should add task', () => {
     const taskOptions = {
       title: 'Task',
-      execute: () => true,
+      execute: R.compose(Task.of),
     }
     const noladius = new Noladius()
 
@@ -45,32 +46,44 @@ describe('noladius', () => {
 
     expect(noladius.tasks.length).toBe(3)
 
-    noladius.add([taskOptions], taskOptions, [new Task(taskOptions)], [])
+    noladius.add([taskOptions], taskOptions, [taskOptions], [])
 
     expect(noladius.tasks.length).toBe(6)
   })
 
   it('should success run', async () => {
-    const noladius = new Noladius()
-
-    noladius.add({
-      title: 'Task 1',
-      before: () => ({ count: -1 }),
-      execute: state => ({
-        count: state.count + 2,
-      }),
-      after: state => Promise.resolve({
-        count: state.count * 2,
-      }),
-    }, {
-      title: 'Task 2',
-      execute: () => state => ({
-        count: state.count + 1,
-      }),
+    const noladius = new Noladius({
+      initialState: {
+        count: 1,
+      },
     })
 
-    await expect(noladius.run()).resolves.toEqual({
-      count: 3,
+    const addAction = val => state => ({
+      count: state.count + val,
+    })
+
+    const divideAction = val => state => ({
+      count: state.count / val,
+    })
+
+    const subAction = val => addAction(-val)
+
+    noladius.add(
+      {
+        title: 'Task 1',
+        execute: () => Task.actions(addAction(2)),
+      },
+      {
+        title: 'Task 2',
+        execute: () => R.concat(
+          Task.actions(subAction(6)),
+          Task.actions(divideAction(2))
+        ),
+      }
+    )
+
+    await expect(noladius.run().catch(console.error)).resolves.toEqual({
+      count: -1.5,
     })
   })
 

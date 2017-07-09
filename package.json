@@ -13,6 +13,11 @@
     "@rispa/eslint-config": "^1.0.1",
     "jest": "^20.0.3"
   },
+  "dependencies": {
+    "p-map": "^1.1.1",
+    "ramda": "^0.24.1",
+    "chalk": "^1.1.3"
+  },
   "scripts": {
     "test": "jest",
     "test:update": "jest -u",
@@ -32,8 +37,5 @@
         "statements": 100
       }
     }
-  },
-  "dependencies": {
-    "p-map": "^1.1.1"
   }
 }
