@@ -1,39 +1,21 @@
 {
-  "name": "Noladius",
+  "name": "noladius",
   "version": "0.1.0",
   "description": "Task runner",
-  "main": "index.js",
   "repository": "https://github.com/Fyzu/Noladius.git",
   "author": "dvpetrov <dvpetrov.main@gmail.com>",
   "license": "MIT",
+  "main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
   "bugs": {
     "url": "https://github.com/Fyzu/Noladius/issues"
   },
   "devDependencies": {
-    "@rispa/eslint-config": "^1.0.1",
-    "jest": "^20.0.3"
+    "@types/node": "^8.0.31",
+    "typescript": "^2.5.2",
+    "tslint": "^5.7.0"
   },
   "scripts": {
-    "test": "jest",
-    "test:update": "jest -u",
-    "test:coverage": "jest --coverage",
-    "lint": "rispa-eslint",
-    "lint:fix": "rispa-eslint --fix"
-  },
-  "jest": {
-    "collectCoverageFrom": [
-      "src/**/*.js"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 100,
-        "functions": 100,
-        "lines": 100,
-        "statements": 100
-      }
-    }
-  },
-  "dependencies": {
-    "p-map": "^1.1.1"
+    "build": "tsc"
   }
 }
