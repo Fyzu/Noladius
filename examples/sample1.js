@@ -2,7 +2,7 @@ const {
   Noladius,
   createNoladius,
   Task,
-  runner
+  runner,
 } = require('../lib')
 
 /**
@@ -28,16 +28,24 @@ function FunctionalExampleTask(state, params) {
   return currentState => ({ prop: 'new' })
 }
 
+
+/**
+ * Функциональная задача
+ * @param state {object}
+ * @param params {object}
+ */
+const LoggerTask = (state, params) => {
+  console.log('Current state:', state)
+  console.log('Current params:', params)
+}
+
 /**
  * Сгенеренная команда через фабрику
  */
 const GeneratedExampleCommand = createNoladius([
-  /**
-   * Функциональный таск
-   * @param state {object}
-   * @param params {object}
-   */
-  (state, params) => console.info('GeneratedExampleCommand message')
+  (state, params) => console.info('GeneratedExampleCommand message'),
+  FunctionalExampleTask,
+  LoggerTask,
 ])
 
 /**
@@ -47,19 +55,16 @@ class ExampleCommand extends Noladius {
   init() {
     return [
       ExampleTask,
-      /**
-       * Функциональный таск
-       * @param state {object}
-       * @param params {object}
-       */
-      (state, params) => {
-        console.dir('Current state:', state)
-        console.dir('Current params:', params)
-      },
+      LoggerTask
     ]
   }
 }
 
-runner(ExampleCommand, { param: 'param' })
-  .then(() => console.log('Complete'))
-  .catch(error => console.error(error))
+function runCommand(Command, params) {
+  return runner(Command, params)
+    .then(() => console.log('Complete'))
+    .catch(error => console.error(error))
+}
+
+runCommand(ExampleCommand, { entry: 'class' })
+  .then(() => runCommand(GeneratedExampleCommand, { entry: 'generated' }))
