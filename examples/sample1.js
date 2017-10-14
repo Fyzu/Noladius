@@ -9,6 +9,16 @@ const {
  * Задача реализованная через наследование
  */
 class ExampleTask extends Task {
+  constructor(context) {
+    super(context)
+
+    this.myTitle = 'ExampleTask - title'
+  }
+
+  getTitle() {
+    return this.myTitle
+  }
+
   run() {
     return new Promise((resolve, reject) => {
       setTimeout(resolve, 100)
@@ -28,6 +38,7 @@ function FunctionalExampleTask(state, params) {
   return currentState => ({ prop: 'new' })
 }
 
+FunctionalExampleTask.title = 'FunctionalExampleTask'
 
 /**
  * Функциональная задача
@@ -39,12 +50,21 @@ const LoggerTask = (state, params) => {
   console.log('Current params:', params)
 }
 
+const ObjectExampleTask = {
+  title: 'ObjectExampleTask',
+  run: (state, params) => {
+    console.log(`Current title: ${ObjectExampleTask.title}`)
+    return currentState => currentState
+  }
+}
+
 /**
  * Сгенеренная команда через фабрику
  */
 const GeneratedExampleCommand = createNoladius([
   (state, params) => console.info('GeneratedExampleCommand message'),
   FunctionalExampleTask,
+  ObjectExampleTask,
   LoggerTask,
 ])
 
@@ -55,6 +75,7 @@ class ExampleCommand extends Noladius {
   init() {
     return [
       ExampleTask,
+      ObjectExampleTask,
       LoggerTask
     ]
   }

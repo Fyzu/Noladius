@@ -1,9 +1,20 @@
 import Noladius from './Noladius'
 import { StoreChanger } from './Store'
 
-export type FunctionalTask = (state: object, params: object) => (StoreChanger | PromiseLike<StoreChanger | void> | void)
+export interface ITask {
+  title: string
+  getTitle?: () => string
+}
 
-abstract class Task {
+export interface FunctionalTask extends ITask {
+  (state: object, params: object): (StoreChanger | PromiseLike<StoreChanger | void> | void)
+}
+
+export interface ObjectTask extends ITask {
+  run: (state: object, params: object) => (StoreChanger | PromiseLike<StoreChanger | void> | void)
+}
+
+abstract class Task implements ITask {
   private context: Noladius
   public title: string
 

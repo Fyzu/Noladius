@@ -1,5 +1,5 @@
 import Noladius from './Noladius'
-import Task, { FunctionalTask } from './Task'
+import Task, { FunctionalTask, ObjectTask } from './Task'
 import TaskConstructor from './TaskConstructor'
 import NoladiusConstructor from './NoladiusConstructor'
 import pMap = require('p-map')
@@ -9,6 +9,10 @@ function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void>
 
   return Promise.resolve()
     .then(() => task.run())
+}
+
+function runObjectTask(task: ObjectTask, context: Noladius): Promise<void> {
+  return runFunctionalTask(task.run as FunctionalTask, context)
 }
 
 function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<void> {
@@ -32,7 +36,9 @@ function runTasks(tasks: Array<FunctionalTask | TaskConstructor | NoladiusConstr
   return pMap(
     tasks,
     task => {
-      if (task.prototype) {
+      if (typeof task === 'object') {
+        return runObjectTask(task as ObjectTask, context)
+      } else if (task.prototype) {
         const parent = Object.getPrototypeOf(task.prototype).constructor
 
         if (parent === Task) {
