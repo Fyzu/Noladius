@@ -7,7 +7,7 @@ abstract class Noladius {
   public store: Store
   public params: object
 
-  constructor(parent: Noladius, params?: object, initialState?: object) {
+  constructor(parent?: Noladius, params?: object, initialState?: object) {
     if (parent instanceof Noladius) {
       this.store = parent.store
       this.params = parent.params
@@ -17,11 +17,11 @@ abstract class Noladius {
     }
   }
 
-  get state() {
+  public get state() {
     return this.store.getState()
   }
 
-  setState(changer: StoreChanger) {
+  public setState(changer: StoreChanger) {
     this.store.setState(changer)
   }
 

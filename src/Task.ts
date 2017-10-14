@@ -5,6 +5,7 @@ export type FunctionalTask = (state: object, params: object) => (StoreChanger | 
 
 abstract class Task {
   private context: Noladius
+  public title: string
 
   constructor(context: Noladius) {
     this.context = context
@@ -14,12 +15,16 @@ abstract class Task {
     this.context.setState(changer)
   }
 
-  protected get state() {
+  protected get state(): object {
     return this.context.state
   }
 
-  protected get params() {
+  protected get params(): object {
     return this.context.params
+  }
+
+  public getTitle(): string {
+    return this.title || this.constructor.name
   }
 
   abstract run(): void | Promise<void>
