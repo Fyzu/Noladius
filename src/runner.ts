@@ -84,7 +84,7 @@ function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<voi
 
 function runCommand(Constructor: NoladiusConstructor, context: Noladius): Promise<void> {
   const command = new Constructor(context)
-  const tasks = command.init()
+  const tasks = command.run()
 
   return runTasks(tasks, context, command.options)
 }
@@ -120,7 +120,7 @@ function runTasks(tasks: Array<FunctionalTask | TaskConstructor | NoladiusConstr
 function runner(Command: NoladiusConstructor, params?: object, initialState?: object) {
   const context = new Command(null, params, initialState)
 
-  const tasks = context.init()
+  const tasks = context.run()
 
   return runTasks(tasks, context, context.options)
 }

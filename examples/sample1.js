@@ -70,7 +70,7 @@ const GeneratedExampleCommand = createNoladius([
  * Команда реализованная через наследование
  */
 class ExampleCommand extends Noladius {
-  init() {
+  run() {
     return [
       ExampleTask,
       ObjectExampleTask,

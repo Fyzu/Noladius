@@ -43,7 +43,7 @@ abstract class Noladius {
     this.store.setState(changer)
   }
 
-  abstract init(): Array<FunctionalTask | TaskConstructor | NoladiusConstructor>
+  abstract run(): Array<FunctionalTask | TaskConstructor | NoladiusConstructor>
 }
 
 export function createNoladius(tasks, options?: NoladiusOptions): NoladiusConstructor {
@@ -57,7 +57,7 @@ export function createNoladius(tasks, options?: NoladiusOptions): NoladiusConstr
       super(context, finalOptions, params, initialState)
     }
 
-    init() {
+    run() {
       return tasks
     }
   }
