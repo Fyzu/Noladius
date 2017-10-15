@@ -6,6 +6,7 @@ node_js:
 sudo: false
 
 script:
+  yarn build
   # - yarn lint
   # - yarn test:coverage
 
