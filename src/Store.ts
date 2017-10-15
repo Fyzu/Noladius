@@ -33,7 +33,7 @@ export class Store {
     if (changer) {
       if (typeof changer === 'function') {
         mutations = changer(this.state)
-      } else {
+      } else if (typeof changer === 'object' && !Array.isArray(changer)) {
         mutations = changer
       }
     }

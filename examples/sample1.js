@@ -9,14 +9,8 @@ const {
  * Задача реализованная через наследование
  */
 class ExampleTask extends Task {
-  constructor(context) {
-    super(context)
-
-    this.myTitle = 'ExampleTask - title'
-  }
-
-  getTitle() {
-    return this.myTitle
+  shouldRun() {
+    return true
   }
 
   run() {
@@ -38,7 +32,11 @@ function FunctionalExampleTask(state, params) {
   return currentState => ({ prop: 'new' })
 }
 
-FunctionalExampleTask.title = 'FunctionalExampleTask'
+FunctionalExampleTask.shouldRun = (state, params) => {
+  console.log('Functional task running skipped')
+
+  return false
+}
 
 /**
  * Функциональная задача
@@ -51,7 +49,7 @@ const LoggerTask = (state, params) => {
 }
 
 const ObjectExampleTask = {
-  title: 'ObjectExampleTask',
+  shouldRun: () => true,
   run: (state, params) => {
     console.log(`Current title: ${ObjectExampleTask.title}`)
     return currentState => currentState
@@ -89,3 +87,4 @@ function runCommand(Command, params) {
 
 runCommand(ExampleCommand, { entry: 'class' })
   .then(() => runCommand(GeneratedExampleCommand, { entry: 'generated' }))
+  .catch(error => console.log(error))

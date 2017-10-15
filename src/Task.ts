@@ -2,8 +2,13 @@ import Noladius from './Noladius'
 import { StoreChanger } from './Store'
 
 export interface ITask {
-  title: string
-  getTitle?: () => string
+  shouldRun?(state: object, params: object): boolean
+
+  didRun?(state: object, params: object): StoreChanger | void
+
+  willRun?(state: object, params: object): StoreChanger | void
+
+  didCatch?(error: any, state: object, params: object): StoreChanger | void
 }
 
 export interface FunctionalTask extends ITask {
@@ -15,12 +20,21 @@ export interface ObjectTask extends ITask {
 }
 
 abstract class Task implements ITask {
+  static defaultParams = {}
+
   private context: Noladius
-  public title: string
 
   constructor(context: Noladius) {
     this.context = context
   }
+
+  shouldRun?(): boolean
+
+  didRun?(): void
+
+  willRun?(): void
+
+  didCatch?(error: any): void
 
   protected setState(changer: StoreChanger) {
     this.context.setState(changer)
@@ -31,11 +45,7 @@ abstract class Task implements ITask {
   }
 
   protected get params(): object {
-    return this.context.params
-  }
-
-  public getTitle(): string {
-    return this.title || this.constructor.name
+    return { ...this.constructor['defaultParams'], ...this.context.params }
   }
 
   abstract run(): void | Promise<void>
