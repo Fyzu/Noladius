@@ -2,6 +2,7 @@ const {
   Noladius,
   createNoladius,
   Task,
+  createTask,
   runner,
 } = require('../lib')
 
@@ -15,7 +16,11 @@ class ExampleTask extends Task {
 
   run() {
     return new Promise((resolve, reject) => {
-      setTimeout(resolve, 100)
+      setTimeout(() => {
+        console.log('Example task run')
+
+        resolve()
+      }, 100)
     })
   }
 }
@@ -48,13 +53,13 @@ const LoggerTask = (state, params) => {
   console.log('Current params:', params)
 }
 
-const ObjectExampleTask = {
+const ObjectExampleTask = createTask({
   shouldRun: () => true,
   run: (state, params) => {
     console.log(`Current title: ${ObjectExampleTask.title}`)
     return currentState => currentState
-  }
-}
+  },
+})
 
 /**
  * Сгенеренная команда через фабрику
@@ -71,10 +76,12 @@ const GeneratedExampleCommand = createNoladius([
  */
 class ExampleCommand extends Noladius {
   run() {
+    console.log('=== ExampleCommand start command ===')
+
     return [
       ExampleTask,
       ObjectExampleTask,
-      LoggerTask
+      LoggerTask,
     ]
   }
 }
@@ -86,5 +93,9 @@ function runCommand(Command, params) {
 }
 
 runCommand(ExampleCommand, { entry: 'class' })
-  .then(() => runCommand(GeneratedExampleCommand, { entry: 'generated' }))
+  .then(() => {
+    console.log('=== GeneratedExampleCommand start command ===')
+
+    return runCommand(GeneratedExampleCommand, { entry: 'generated' })
+  })
   .catch(error => console.log(error))

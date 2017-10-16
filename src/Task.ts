@@ -1,7 +1,6 @@
 import Noladius from './Noladius'
 import { StoreChanger } from './Store'
 import NoladiusConstructor from './NoladiusConstructor'
-import TaskConstructor from './TaskConstructor'
 
 export type TaskReturnValue = (
   StoreChanger
@@ -59,62 +58,12 @@ abstract class Task implements ITask {
   abstract run(): (void | NoladiusConstructor) | Promise<void | NoladiusConstructor>
 }
 
-export function createTask(task: ObjectTask): TaskConstructor {
-  return class extends Task {
-    shouldRun(): boolean {
-      if (task.shouldRun) {
-        return task.shouldRun(this.state, this.params)
-      }
-
-      return true
-    }
-
-    didRun(): void {
-      if (task.didRun) {
-        const changer = task.didRun(this.state, this.params)
-        if (changer) {
-          this.setState(changer)
-        }
-      }
-    }
-
-    willRun(): void {
-      if (task.willRun) {
-        const changer = task.willRun(this.state, this.params)
-        if (changer) {
-          this.setState(changer)
-        }
-      }
-    }
-
-    didCatch(error: any): void {
-      if (task.didCatch) {
-        const changer = task.didCatch(error, this.state, this.params)
-        if (changer) {
-          this.setState(changer)
-        }
-      }
-    }
-
-    run() {
-      return Promise.resolve(task.run(this.state, this.params) as any)
-        .then(value => {
-          if (value) {
-            if (typeof value === 'function' && value.prototype) {
-              const parent = Object.getPrototypeOf(value.prototype).constructor
-              if (parent && parent === Noladius) {
-                return value as NoladiusConstructor
-              }
-            }
-
-            if (!Array.isArray(value)) {
-              this.setState(value as StoreChanger)
-            }
-          }
-        })
-    }
-
+export function createTask({ run, ...options }: ObjectTask): FunctionalTask {
+  function Task(state: object, params: object) {
+    return run(state, params)
   }
+
+  return Object.assign(Task, options)
 }
 
 export default Task

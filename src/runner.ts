@@ -1,30 +1,9 @@
 import Noladius, { NoladiusOptions } from './Noladius'
-import Task, { FunctionalTask, TaskReturnValue } from './Task'
+import Task, { FunctionalTask } from './Task'
 import TaskConstructor from './TaskConstructor'
 import NoladiusConstructor from './NoladiusConstructor'
 import Parallel from './Parallel'
 import { StoreChanger } from './Store'
-
-function handleTaskResult(result: TaskReturnValue, context: Noladius) {
-  return Promise.resolve(result)
-    .then(value => {
-      if (value && !Array.isArray(value)) {
-        if (typeof value === 'function') {
-          if (value.prototype) {
-            const parent = Object.getPrototypeOf(value.prototype).constructor
-
-            if (parent === Noladius) {
-              return runCommand(value as NoladiusConstructor, context)
-            }
-          }
-
-          this.setState(value as StoreChanger)
-        } else if (typeof value === 'object') {
-          this.setState(value as StoreChanger)
-        }
-      }
-    })
-}
 
 function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void> {
   const task = new Constructor(context)
@@ -35,7 +14,16 @@ function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void>
       if (shouldRun) {
         return Promise.resolve()
           .then(() => task.willRun && task.willRun())
-          .then(() => handleTaskResult(task.run(), context))
+          .then(() => task.run())
+          .then(value => {
+            if (value && typeof value === 'function' && value.prototype) {
+              const parent = Object.getPrototypeOf(value.prototype).constructor
+
+              if (parent === Noladius) {
+                return runCommand(value as NoladiusConstructor, context)
+              }
+            }
+          })
           .then(() => task.didRun && task.didRun())
       }
     })
@@ -57,13 +45,32 @@ function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<voi
       }
     })
 
+  console.log(task)
+
   return Promise
     .resolve(!task.shouldRun || task.shouldRun(context.state, context.params))
     .then(shouldRun => {
       if (shouldRun) {
         return Promise.resolve()
           .then(() => task.willRun && executeFunction(task.willRun))
-          .then(() => handleTaskResult(task(context.state, context.params), context))
+          .then(() => task(context.state, context.params))
+          .then(value => {
+            if (value && !Array.isArray(value)) {
+              if (typeof value === 'function') {
+                if (value.prototype) {
+                  const parent = Object.getPrototypeOf(value.prototype).constructor
+
+                  if (parent === Noladius) {
+                    return runCommand(value as NoladiusConstructor, context)
+                  }
+                }
+
+                context.setState(value as StoreChanger)
+              } else if (typeof value === 'object') {
+                context.setState(value as StoreChanger)
+              }
+            }
+          })
           .then(() => task.didRun && executeFunction(task.didRun))
       }
     })
@@ -100,7 +107,7 @@ function runTasks(tasks: Array<FunctionalTask | TaskConstructor | NoladiusConstr
 }
 
 function runner(Command: NoladiusConstructor, params?: object, initialState?: object) {
-  const context = new Command(null, params, initialState)
+  const context = new Command(null, null, params, initialState)
 
   const tasks = context.run()
 

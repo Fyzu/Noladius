@@ -31,7 +31,7 @@ abstract class Noladius {
 
     this.options = {
       ...this.constructor['defaultOptions'],
-      ...options
+      ...options,
     }
   }
 

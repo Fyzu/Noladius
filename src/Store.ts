@@ -40,7 +40,7 @@ export class Store {
 
     this.state = {
       ...this.state,
-      ...mutations
+      ...mutations,
     }
   }
 }

@@ -5,7 +5,6 @@ const {
   runner,
 } = require('../lib')
 
-
 const createDelayedTask = (cb, timeout) =>
   () => new Promise(resolve => {
     setTimeout(() => {

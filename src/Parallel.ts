@@ -30,7 +30,7 @@ export default class Parallel<TItem = any> {
     return new Promise((resolve, reject) => {
       let rejected = false
       let resolved = false
-      let inProgressCount = 0
+      let resolvedCount = 0
 
       const handleNext = () => {
         const { value, done } = iterator.next()
@@ -38,18 +38,16 @@ export default class Parallel<TItem = any> {
           return
         }
 
-        inProgressCount++
-
         const currentIdx = this.iterable.indexOf(value)
 
         Promise.resolve(value)
           .then(result => mapper(result, currentIdx, this.iterable))
           .then(
             result => {
-              inProgressCount--
+              resolvedCount++
               results[currentIdx] = result
 
-              if (inProgressCount === 0) {
+              if (resolvedCount === length) {
                 resolved = true
 
                 resolve(results)
@@ -58,14 +56,14 @@ export default class Parallel<TItem = any> {
               }
             },
             error => {
-              inProgressCount--
+              resolvedCount++
               results[currentIdx] = error
 
               if (throwErrors) {
                 rejected = true
 
                 reject(error)
-              } else if (inProgressCount === 0) {
+              } else if (resolvedCount === length) {
                 resolved = true
 
                 resolve(results)

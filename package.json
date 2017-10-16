@@ -11,6 +11,8 @@
     "url": "https://github.com/Fyzu/Noladius/issues"
   },
   "scripts": {
+    "lint": "tslint --type-check -p tsconfig.json",
+    "lint:fix": "tslint --fix --type-check -p tsconfig.json",
     "build": "tsc"
   },
   "devDependencies": {
