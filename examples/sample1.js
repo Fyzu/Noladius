@@ -81,7 +81,7 @@ class ExampleCommand extends Noladius {
 
 function runCommand(Command, params) {
   return runner(Command, params)
-    .then(() => console.log('Complete'))
+    .then(() => console.log('=== Complete run command ==='))
     .catch(error => console.error(error))
 }
 

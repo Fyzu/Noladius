@@ -1,8 +1,30 @@
 import Noladius, { NoladiusOptions } from './Noladius'
-import Task, { FunctionalTask, ObjectTask } from './Task'
+import Task, { FunctionalTask, TaskReturnValue } from './Task'
 import TaskConstructor from './TaskConstructor'
 import NoladiusConstructor from './NoladiusConstructor'
-import pMap = require('p-map')
+import Parallel from './Parallel'
+import { StoreChanger } from './Store'
+
+function handleTaskResult(result: TaskReturnValue, context: Noladius) {
+  return Promise.resolve(result)
+    .then(value => {
+      if (value && !Array.isArray(value)) {
+        if (typeof value === 'function') {
+          if (value.prototype) {
+            const parent = Object.getPrototypeOf(value.prototype).constructor
+
+            if (parent === Noladius) {
+              return runCommand(value as NoladiusConstructor, context)
+            }
+          }
+
+          this.setState(value as StoreChanger)
+        } else if (typeof value === 'object') {
+          this.setState(value as StoreChanger)
+        }
+      }
+    })
+}
 
 function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void> {
   const task = new Constructor(context)
@@ -13,41 +35,13 @@ function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void>
       if (shouldRun) {
         return Promise.resolve()
           .then(() => task.willRun && task.willRun())
-          .then(() => task.run())
+          .then(() => handleTaskResult(task.run(), context))
           .then(() => task.didRun && task.didRun())
       }
     })
     .catch(error => {
       if (task.didCatch) {
         task.didCatch(error)
-      } else {
-        throw error
-      }
-    })
-}
-
-function runObjectTask(task: ObjectTask, context: Noladius): Promise<void> {
-  const executeFunction = func => Promise
-    .resolve(func(context.state, context.params))
-    .then(changer => {
-      if (changer) {
-        context.setState(changer)
-      }
-    })
-
-  return Promise
-    .resolve(!task.shouldRun || task.shouldRun(context.state, context.params))
-    .then(shouldRun => {
-      if (shouldRun) {
-        return Promise.resolve()
-          .then(() => task.willRun && executeFunction(task.willRun))
-          .then(() => executeFunction(task.run))
-          .then(() => task.didRun && executeFunction(task.didRun))
-      }
-    })
-    .catch(error => {
-      if (task.didCatch) {
-        task.didCatch(error, context.state, context.params)
       } else {
         throw error
       }
@@ -69,7 +63,7 @@ function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<voi
       if (shouldRun) {
         return Promise.resolve()
           .then(() => task.willRun && executeFunction(task.willRun))
-          .then(() => executeFunction(task))
+          .then(() => handleTaskResult(task(context.state, context.params), context))
           .then(() => task.didRun && executeFunction(task.didRun))
       }
     })
@@ -90,30 +84,18 @@ function runCommand(Constructor: NoladiusConstructor, context: Noladius): Promis
 }
 
 function runTasks(tasks: Array<FunctionalTask | TaskConstructor | NoladiusConstructor>, context: Noladius, options: NoladiusOptions): Promise<any> {
-  return pMap(
-    tasks,
-    task => {
-      if (typeof task === 'object') {
-        return runObjectTask(task as ObjectTask, context)
-      } else if (task.prototype) {
-        const parent = Object.getPrototypeOf(task.prototype).constructor
+  return new Parallel(tasks, options).map(task => {
+    if (task.prototype) {
+      const parent = Object.getPrototypeOf(task.prototype).constructor
 
-        if (parent === Task) {
-          return runTask(task as TaskConstructor, context)
-        } else if (parent === Noladius) {
-          return runCommand(task as NoladiusConstructor, context)
-        }
+      if (parent === Task) {
+        return runTask(task as TaskConstructor, context)
+      } else if (parent === Noladius) {
+        return runCommand(task as NoladiusConstructor, context)
       }
-
-      return runFunctionalTask(task as FunctionalTask, context)
-    },
-    { concurrency: options.concurrency },
-  ).catch(errors => {
-    if (options.throwErrors) {
-      throw errors
     }
 
-    return errors
+    return runFunctionalTask(task as FunctionalTask, context)
   })
 }
 
