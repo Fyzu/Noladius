@@ -6,8 +6,8 @@ node_js:
 sudo: false
 
 script:
-  - yarn lint
-  - yarn test:coverage
+  yarn lint
+  # - yarn test:coverage
 
 cache:
   yarn: true
