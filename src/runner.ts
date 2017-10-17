@@ -2,7 +2,7 @@ import Noladius, { NoladiusOptions } from './Noladius'
 import Task, { FunctionalTask } from './Task'
 import TaskConstructor from './TaskConstructor'
 import NoladiusConstructor from './NoladiusConstructor'
-import Parallel from './Parallel'
+import { createParallel } from './Parallel'
 import { StoreChanger } from './Store'
 
 function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void> {
@@ -13,7 +13,11 @@ function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void>
     .then(shouldRun => {
       if (shouldRun) {
         return Promise.resolve()
-          .then(() => task.willRun && task.willRun())
+          .then(() => {
+            if (task.willRun) {
+              task.willRun()
+            }
+          })
           .then(() => task.run())
           .then(value => {
             if (value && typeof value === 'function' && value.prototype) {
@@ -24,7 +28,11 @@ function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void>
               }
             }
           })
-          .then(() => task.didRun && task.didRun())
+          .then(() => {
+            if (task.didRun) {
+              task.didRun()
+            }
+          })
       }
     })
     .catch(error => {
@@ -44,8 +52,6 @@ function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<voi
         context.setState(changer)
       }
     })
-
-  console.log(task)
 
   return Promise
     .resolve(!task.shouldRun || task.shouldRun(context.state, context.params))
@@ -91,7 +97,7 @@ function runCommand(Constructor: NoladiusConstructor, context: Noladius): Promis
 }
 
 function runTasks(tasks: Array<FunctionalTask | TaskConstructor | NoladiusConstructor>, context: Noladius, options: NoladiusOptions): Promise<any> {
-  return new Parallel(tasks, options).map(task => {
+  return createParallel(tasks, options).map(task => {
     if (task.prototype) {
       const parent = Object.getPrototypeOf(task.prototype).constructor
 

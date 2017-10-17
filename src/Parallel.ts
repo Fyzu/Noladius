@@ -80,3 +80,7 @@ export default class Parallel<TItem = any> {
     })
   }
 }
+
+export function createParallel<TItem = any>(iterable: Array<TItem>, options?: ParallelOptions) {
+  return new Parallel<TItem>(iterable, options)
+}
