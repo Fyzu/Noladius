@@ -15,7 +15,7 @@ function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void>
         return Promise.resolve()
           .then(() => {
             if (task.willRun) {
-              task.willRun()
+              return task.willRun()
             }
           })
           .then(() => task.run())
@@ -30,7 +30,7 @@ function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void>
           })
           .then(() => {
             if (task.didRun) {
-              task.didRun()
+              return task.didRun()
             }
           })
       }
@@ -46,7 +46,7 @@ function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void>
 
 function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<void> {
   const executeFunction = func => Promise
-    .resolve(func(context.state, context.params))
+    .resolve(func(context.state, context.params, context.dispatch))
     .then(changer => {
       if (changer) {
         context.setState(changer)
@@ -59,7 +59,7 @@ function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<voi
       if (shouldRun) {
         return Promise.resolve()
           .then(() => task.willRun && executeFunction(task.willRun))
-          .then(() => task(context.state, context.params))
+          .then(() => task(context.state, context.params, context.dispatch))
           .then(value => {
             if (value && !Array.isArray(value)) {
               if (typeof value === 'function') {
@@ -82,7 +82,7 @@ function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<voi
     })
     .catch(error => {
       if (task.didCatch) {
-        task.didCatch(error, context.state, context.params)
+        task.didCatch(error, context.state, context.params, context.dispatch)
       } else {
         throw error
       }
@@ -91,9 +91,25 @@ function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<voi
 
 function runCommand(Constructor: NoladiusConstructor, context: Noladius): Promise<void> {
   const command = new Constructor(context)
-  const tasks = command.run()
 
-  return runTasks(tasks, context, command.options)
+  return Promise.resolve(!command.shouldRun || command.shouldRun())
+    .then(shouldRun => {
+      if (shouldRun) {
+        return Promise.resolve()
+          .then(() => {
+            if (command.willRun) {
+              return command.willRun()
+            }
+          })
+          .then(() => command.run())
+          .then(tasks => runTasks(tasks, context, command.options))
+          .then(() => {
+            if (command.didRun) {
+              return command.didRun()
+            }
+          })
+      }
+    })
 }
 
 function runTasks(tasks: Array<FunctionalTask | TaskConstructor | NoladiusConstructor>, context: Noladius, options: NoladiusOptions): Promise<any> {
@@ -112,12 +128,27 @@ function runTasks(tasks: Array<FunctionalTask | TaskConstructor | NoladiusConstr
   })
 }
 
-function runner(Command: NoladiusConstructor, params?: object, initialState?: object) {
-  const context = new Command(null, null, params, initialState)
+function runner(Command: NoladiusConstructor, params?: object): PromiseLike<any> {
+  const context = new Command(null, null, params)
 
-  const tasks = context.run()
-
-  return runTasks(tasks, context, context.options)
+  return Promise.resolve(!context.shouldRun || context.shouldRun())
+    .then(shouldRun => {
+      if (shouldRun) {
+        return Promise.resolve()
+          .then(() => {
+            if (context.willRun) {
+              return context.willRun()
+            }
+          })
+          .then(() => context.run())
+          .then(tasks => runTasks(tasks, context, context.options))
+          .then(() => {
+            if (context.didRun) {
+              return context.didRun()
+            }
+          })
+      }
+    })
 }
 
 export default runner

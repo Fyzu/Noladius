@@ -1,33 +1,33 @@
-export type StoreListener = (state: object) => void
+export type StoreListener<State extends object = object> = (state: State) => void
 
-export default function createStore(initialState: object) {
+export default function createStore<State extends object = object>(initialState: State) {
   return new Store(initialState)
 }
 
-export type StoreChanger = object | ((state: object) => object)
+export type StoreChanger<State extends object = object> = object | ((state: State) => object)
 
-export class Store {
-  private state: object
-  private listeners: StoreListener[]
+export class Store<State extends object = object> {
+  private state: State
+  private listeners: StoreListener<State>[]
 
-  constructor(initialState = {}) {
+  constructor(initialState: State = {} as State) {
     this.state = initialState
     this.listeners = []
   }
 
-  public addListener(listener: StoreListener) {
+  public addListener(listener: StoreListener<State>) {
     this.listeners.push(listener)
   }
 
-  public removeListener(toRemove: StoreListener) {
+  public removeListener(toRemove: StoreListener<State>) {
     this.listeners = this.listeners.filter(listener => listener !== toRemove)
   }
 
-  public getState() {
+  public getState(): State {
     return this.state
   }
 
-  public setState(changer: StoreChanger) {
+  public setState(changer: StoreChanger<State>) {
     let mutations = {}
 
     if (changer) {
@@ -39,8 +39,8 @@ export class Store {
     }
 
     this.state = {
-      ...this.state,
+      ...this.state as Object,
       ...mutations,
-    }
+    } as State
   }
 }
