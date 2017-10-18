@@ -6,12 +6,13 @@
     "moduleResolution": "node",
     "pretty": true,
     "outDir": "lib",
+    "rootDir": "src",
     "target": "es6",
     "sourceMap": false,
     "declaration": true,
     "typeRoots" : [
       "./node_modules/@types",
-      "./typings"
+      "./types"
     ]
   },
   "include": [

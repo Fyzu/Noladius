@@ -21,8 +21,6 @@ abstract class Noladius<
 
   static defaultParams: object = {}
 
-  static initialState: object = {}
-
   public store: Store<State>
   public events: Events<Actions>
   public params: Params
@@ -32,13 +30,14 @@ abstract class Noladius<
     context?: Noladius<State, Params, Actions>,
     options?: NoladiusOptions,
     params?: Params,
+    initialState?: State,
   ) {
     if (context instanceof Noladius) {
       this.store = context.store
       this.params = { ...this.constructor['defaultParams'], ...context.params as object }
       this.events = context.events
     } else {
-      this.store = createStore(this.constructor['initialState'])
+      this.store = createStore(initialState)
       this.events = createEvents<Actions>()
       this.params = { ...this.constructor['defaultParams'], ...params as object }
     }
@@ -88,13 +87,13 @@ export function createNoladius<
   Actions extends Action = Action
 >(tasks, options?: NoladiusOptions): NoladiusConstructor<State, Params, Actions> {
   return class extends Noladius<State, Params, Actions> {
-    constructor(context?: Noladius<State, Params, Actions>, newOptions?: NoladiusOptions, params?: Params) {
+    constructor(context?: Noladius<State, Params, Actions>, newOptions?: NoladiusOptions, params?: Params, initialState?: State) {
       const finalOptions = {
         ...options,
         ...newOptions,
       }
 
-      super(context, finalOptions, params)
+      super(context, finalOptions, params, initialState)
     }
 
     run() {

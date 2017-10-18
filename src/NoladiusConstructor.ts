@@ -10,9 +10,8 @@ type NoladiusConstructor<
     parent: Noladius<State, Params, Actions>,
     options?: NoladiusOptions,
     params?: Params,
+    initialState?: State,
   ): Noladius<State, Params, Actions>
-
-  initialState: object
 
   defaultParams: object
 }

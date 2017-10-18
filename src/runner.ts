@@ -128,8 +128,8 @@ function runTasks(tasks: Array<FunctionalTask | TaskConstructor | NoladiusConstr
   })
 }
 
-function runner(Command: NoladiusConstructor, params?: object): PromiseLike<any> {
-  const context = new Command(null, null, params)
+function runner(Command: NoladiusConstructor, params?: object, initialState?: object): PromiseLike<any> {
+  const context = new Command(null, null, params, initialState)
 
   return Promise.resolve(!context.shouldRun || context.shouldRun())
     .then(shouldRun => {
