@@ -1,6 +1,6 @@
 {
   "name": "noladius",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Task runner",
   "repository": "https://github.com/Fyzu/Noladius.git",
   "author": "Dmitry Petrov <dvpetrov.main@gmail.com>",
@@ -13,7 +13,8 @@
   "scripts": {
     "lint": "tslint --type-check -p tsconfig.json",
     "lint:fix": "tslint --fix --type-check -p tsconfig.json",
-    "build": "tsc"
+    "build": "tsc",
+    "release": "yarn && yarn build && yarn version && npm publish ./ --access=public"
   },
   "devDependencies": {
     "@rispa/tslint-config": ">=1.0.0",
