@@ -22,6 +22,12 @@ export {
   createAction,
   createReducer,
   createEvents,
+  EventsReducer,
+  EventsDispatch,
+  EventsReducerOn,
+  EventsReducerSubscribe,
+  Action,
+  ActionFabric,
 } from './Events'
 
 export {

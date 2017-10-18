@@ -9,17 +9,17 @@ export interface EventsReducer<Actions extends Action = Action> {
 
 export type EventsDispatch<Actions extends Action = Action> = (action: Actions) => void
 
-export type ReducerSubscribe<Actions extends Action = Action> = (on: ReducerOn<Actions>) => void
+export type EventsReducerSubscribe<Actions extends Action = Action> = (on: EventsReducerOn<Actions>) => void
 
-export type ReducerOn<Actions extends Action = Action> =
+export type EventsReducerOn<Actions extends Action = Action> =
   (action: Actions | Actions['type'] | ActionFabric<Actions>, handler: EventsReducer<Actions>) => void
 
-export function createReducer<Actions extends Action = Action>(subscribe: ReducerSubscribe<Actions>): EventsReducer<Actions> {
+export function createReducer<Actions extends Action = Action>(subscribe: EventsReducerSubscribe<Actions>): EventsReducer<Actions> {
   const handlers: {
     [key: string]: EventsReducer<Actions>
   } = {}
 
-  const on: ReducerOn<Actions> = (action, handler) => {
+  const on: EventsReducerOn<Actions> = (action, handler) => {
     if (typeof action === 'string') {
       handlers[action as string] = handler
     } else {
