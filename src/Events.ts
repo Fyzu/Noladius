@@ -4,10 +4,59 @@ export interface Action<Type extends string = string, Payload = any> {
 }
 
 export interface EventsReducer<Actions extends Action = Action> {
-  (action: Actions, dispatch: (action: Actions) => void): void
+  (action: Actions, dispatch: EventsDispatch<Actions>): void
 }
 
 export type EventsDispatch<Actions extends Action = Action> = (action: Actions) => void
+
+export type ReducerSubscribe<Actions extends Action = Action> = (on: ReducerOn<Actions>) => void
+
+export type ReducerOn<Actions extends Action = Action> =
+  (action: Actions | Actions['type'] | ActionFabric<Actions>, handler: EventsReducer<Actions>) => void
+
+export function createReducer<Actions extends Action = Action>(subscribe: ReducerSubscribe<Actions>): EventsReducer<Actions> {
+  const handlers: {
+    [key: string]: EventsReducer<Actions>
+  } = {}
+
+  const on: ReducerOn<Actions> = (action, handler) => {
+    if (typeof action === 'string') {
+      handlers[action as string] = handler
+    } else {
+      handlers[action.type] = handler
+    }
+  }
+
+  subscribe(on)
+
+  return (action: Actions, dispatch: EventsDispatch<Actions>) => {
+    const handler = handlers[action.type]
+    if (handler) {
+      handler(action, dispatch)
+    }
+  }
+}
+
+const identity = value => value
+
+export type ActionFabric<Actions extends Action = Action> = {
+  (...args): Actions,
+  type?: Actions['type']
+}
+
+export function createAction<Actions extends Action = Action>(
+  type: Actions['type'],
+  mapper: (...args) => Actions['payload'] = identity,
+): ActionFabric {
+  const actionFabric: ActionFabric = (...args) => ({
+    type,
+    payload: mapper(...args),
+  })
+
+  actionFabric.type = type
+
+  return actionFabric
+}
 
 export default class Events<Actions extends Action = Action> {
   private reducers: {

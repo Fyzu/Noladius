@@ -2,18 +2,23 @@ const {
   Noladius,
   createNoladius,
   Task,
+  createReducer,
+  createAction,
   runner,
 } = require('../lib')
 
-function eventsReducer({ type, payload }) {
-  console.log(`-- trigger event '${type}' --`)
+const handleTriggerAction = ({ type, payload }) => {
+  console.log(`-- trigger action '${type}' --`)
   console.log(payload)
 }
 
+const runAction = createAction('FIRST_TASK/RUN')
 
 class EventsExampleCommand extends Noladius {
   willRun() {
-    this.registerReducer('events', eventsReducer)
+    this.registerReducer('events', createReducer(on => {
+      on(runAction, handleTriggerAction)
+    }))
   }
 
   run() {
@@ -21,7 +26,7 @@ class EventsExampleCommand extends Noladius {
       (state, params, dispatch) => {
         console.log('First task run')
 
-        dispatch({ type: 'FIRST_TASK/RUN', payload: { state, params }})
+        dispatch(runAction({ state, params }))
       }
     ]
   }

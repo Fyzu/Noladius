@@ -7,7 +7,9 @@ type TaskConstructor<
   Params extends object = {},
   Actions extends Action = Action
 > = {
-  new(context: Noladius<State, Params, Actions>): Task
+  new(context: Noladius<State, Params, Actions>): Task<State, Params, Actions>
+
+  defaultParams: object
 }
 
 export default TaskConstructor
