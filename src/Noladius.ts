@@ -75,9 +75,9 @@ abstract class Noladius<
   }
 
   abstract run(): Array<
-    FunctionalTask<State>
-    | TaskConstructor<State, Params, Actions>
-    | NoladiusConstructor<State, Params, Actions>
+    FunctionalTask
+    | TaskConstructor
+    | NoladiusConstructor
   >
 }
 
