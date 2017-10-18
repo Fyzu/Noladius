@@ -1,37 +1,60 @@
 import Noladius from './Noladius'
 import { StoreChanger } from './Store'
 import NoladiusConstructor from './NoladiusConstructor'
+import { Action, EventsDispatch } from './Events'
 
-export type TaskReturnValue = (
-  StoreChanger
-  | NoladiusConstructor
-  | PromiseLike<StoreChanger | NoladiusConstructor | void>
-  | void)
+export type TaskReturnValue<
+  State extends object = object,
+  Params extends object = object,
+  Actions extends Action = Action
+> = (
+  StoreChanger<State>
+  | NoladiusConstructor<State, Params, Actions>
+  | PromiseLike<StoreChanger<State>
+  | NoladiusConstructor<State, Params, Actions> | void>
+  | void
+)
 
-export interface ITask {
-  shouldRun?(state: object, params: object): boolean
+export interface ITask<
+  State extends object,
+  Params extends object,
+  Actions extends Action = Action
+> {
+  shouldRun?(state: State, params: Params): boolean
 
-  didRun?(state: object, params: object): StoreChanger | void
+  didRun?(state: State, params: Params, dispatch: EventsDispatch<Actions>): StoreChanger<State> | void
 
-  willRun?(state: object, params: object): StoreChanger | void
+  willRun?(state: State, params: Params, dispatch: EventsDispatch<Actions>): StoreChanger<State> | void
 
-  didCatch?(error: any, state: object, params: object): StoreChanger | void
+  didCatch?<Error = any>(error: Error, state: State, params: Params, dispatch: EventsDispatch<Actions>): StoreChanger<State> | void
 }
 
-export interface FunctionalTask extends ITask {
-  (state: object, params: object): TaskReturnValue
+export interface FunctionalTask<
+  State extends object = {},
+  Params extends object = {},
+  Actions extends Action = Action
+> extends ITask<State, Params> {
+  (state: State, params: Params, dispatch: EventsDispatch<Actions>): TaskReturnValue<State, Params, Actions>
 }
 
-export interface ObjectTask extends ITask {
-  run(state: object, params: object): TaskReturnValue
+export interface ObjectTask<
+  State extends object = {},
+  Params extends object = {},
+  Actions extends Action = Action
+> extends ITask<State, Params> {
+  run(state: State, params: Params, dispatch: EventsDispatch<Actions>): TaskReturnValue<State, Params, Actions>
 }
 
-abstract class Task implements ITask {
+abstract class Task<
+  State extends object = {},
+  Params extends object = {},
+  Actions extends Action = Action
+> implements ITask<State, Params, Actions> {
   static defaultParams = {}
 
-  private context: Noladius
+  private context: Noladius<State, Params, Actions>
 
-  constructor(context: Noladius) {
+  constructor(context: Noladius<State, Params, Actions>) {
     this.context = context
   }
 
@@ -43,24 +66,38 @@ abstract class Task implements ITask {
 
   didCatch?(error: any): void
 
-  protected setState(changer: StoreChanger) {
+  protected setState(changer: StoreChanger<State>) {
     this.context.setState(changer)
   }
 
-  protected get state(): object {
-    return this.context.state
+  protected get state(): State {
+    return this.context.state as State
   }
 
-  protected get params(): object {
-    return { ...this.constructor['defaultParams'], ...this.context.params }
+  protected get params(): Params {
+    return {
+      ...this.constructor['defaultParams'],
+      ...this.context.params as object,
+    }
   }
 
-  abstract run(): (void | NoladiusConstructor) | Promise<void | NoladiusConstructor>
+  protected dispatch(action: Actions) {
+    this.context.dispatch(action)
+  }
+
+  abstract run(): (
+    (void | NoladiusConstructor<State, Params, Actions>) |
+    Promise<void | NoladiusConstructor<State, Params, Actions>>
+  )
 }
 
-export function createTask({ run, ...options }: ObjectTask): FunctionalTask {
-  function Task(state: object, params: object) {
-    return run(state, params)
+export function createTask<
+  State extends object = {},
+  Params extends object = {},
+  Actions extends Action = Action
+>({ run, ...options }: ObjectTask<State, Params>): FunctionalTask<State, Params> {
+  function Task(state: State, params: Params, dispatch: EventsDispatch<Actions>) {
+    return run(state, params, dispatch)
   }
 
   return Object.assign(Task, options)
