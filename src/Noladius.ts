@@ -58,6 +58,10 @@ abstract class Noladius<
     return this.store.getState()
   }
 
+  public set state(state: State) {
+    this.store.setState(state)
+  }
+
   public setState(changer: StoreChanger<State>) {
     this.store.setState(changer)
   }
