@@ -40,13 +40,13 @@ export function createReducer<Actions extends Action = Action>(subscribe: Events
 const identity = value => value
 
 export type ActionFabric<Actions extends Action = Action> = {
-  (...args): Actions,
+  (...args: any[]): Actions,
   type?: Actions['type']
 }
 
 export function createAction<Actions extends Action = Action>(
   type: Actions['type'],
-  mapper: (...args) => Actions['payload'] = identity,
+  mapper: (...args: any[]) => Actions['payload'] = identity,
 ): ActionFabric {
   const actionFabric: ActionFabric = (...args) => ({
     type,
