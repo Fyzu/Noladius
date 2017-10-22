@@ -1,6 +1,6 @@
 export interface Action<Type extends string = string, Payload = any> {
   type: Type,
-  payload?: Payload,
+  payload: Payload,
 }
 
 export interface EventsReducer<Actions extends Action = Action> {
@@ -47,11 +47,14 @@ export type ActionFabric<Actions extends Action = Action> = {
 export function createAction<Actions extends Action = Action>(
   type: Actions['type'],
   mapper: (...args: any[]) => Actions['payload'] = identity,
-): ActionFabric {
-  const actionFabric: ActionFabric = (...args) => ({
-    type,
-    payload: mapper(...args),
-  })
+): ActionFabric<Actions> {
+  const actionFabric: ActionFabric<Actions> =
+    (...args): Actions => (
+      {
+        type,
+        payload: mapper(...args),
+      } as Actions
+    )
 
   actionFabric.type = type
 
