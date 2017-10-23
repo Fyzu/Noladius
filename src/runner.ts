@@ -45,20 +45,17 @@ function runTask(Constructor: TaskConstructor, context: Noladius): Promise<void>
 }
 
 function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<void> {
-  const executeFunction = func => Promise
-    .resolve(func(context.state, context.params, context.dispatch))
-    .then(changer => {
-      if (changer) {
-        context.setState(changer)
-      }
-    })
-
   return Promise
     .resolve(!task.shouldRun || task.shouldRun(context.state, context.params))
     .then(shouldRun => {
       if (shouldRun) {
         return Promise.resolve()
-          .then(() => task.willRun && executeFunction(task.willRun))
+          .then(() => task.willRun && task.willRun(context.state, context.params, context.dispatch))
+          .then((changer: StoreChanger | undefined) => {
+            if (changer) {
+              context.setState(changer)
+            }
+          })
           .then(() => task(context.state, context.params, context.dispatch))
           .then(value => {
             if (value && !Array.isArray(value)) {
@@ -77,7 +74,12 @@ function runFunctionalTask(task: FunctionalTask, context: Noladius): Promise<voi
               }
             }
           })
-          .then(() => task.didRun && executeFunction(task.didRun))
+          .then(() => task.didRun && task.didRun(context.state, context.params, context.dispatch))
+          .then((changer: StoreChanger | undefined) => {
+            if (changer) {
+              context.setState(changer)
+            }
+          })
       }
     })
     .catch(error => {

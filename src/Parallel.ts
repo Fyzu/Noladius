@@ -25,7 +25,7 @@ export default class Parallel<TItem = any> {
     const { concurrency, throwErrors } = this.options
     const length = this.iterable.length
     const iterator = this.iterable[Symbol.iterator]()
-    const results = []
+    const results: any[] = []
 
     return new Promise((resolve, reject) => {
       let rejected = false

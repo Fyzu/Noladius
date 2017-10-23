@@ -37,7 +37,7 @@ export function createReducer<Actions extends Action = Action>(subscribe: Events
   }
 }
 
-const identity = value => value
+const identity = (value: any) => value
 
 export type ActionFabric<Actions extends Action = Action> = {
   (...args: any[]): Actions,

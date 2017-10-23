@@ -4,6 +4,7 @@
     "baseUrl": "./src",
     "module": "commonjs",
     "moduleResolution": "node",
+    "noImplicitAny": true,
     "pretty": true,
     "outDir": "lib",
     "rootDir": "src",

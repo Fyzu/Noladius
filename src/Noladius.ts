@@ -4,7 +4,7 @@ import NoladiusConstructor from './NoladiusConstructor'
 import TaskConstructor from './TaskConstructor'
 import Events, { Action, createEvents, EventsDispatch, EventsReducer } from './Events'
 
-export type NoladiusOptions = {
+export interface NoladiusOptions {
   concurrency?: number
   throwErrors?: boolean
 }
@@ -32,18 +32,21 @@ abstract class Noladius<
     params?: Params,
     initialState?: State,
   ) {
+
+    const constructor = this.constructor as NoladiusConstructor
+
     if (context instanceof Noladius) {
       this.store = context.store
-      this.params = { ...this.constructor['defaultParams'], ...context.params as object }
+      this.params = { ...constructor.defaultParams, ...context.params as object } as Params
       this.events = context.events
     } else {
       this.store = createStore(initialState)
       this.events = createEvents<Actions>()
-      this.params = { ...this.constructor['defaultParams'], ...params as object }
+      this.params = { ...constructor.defaultParams, ...params as object } as Params
     }
 
     this.options = {
-      ...this.constructor['defaultOptions'],
+      ...constructor.defaultOptions,
       ...options,
     }
   }
@@ -89,7 +92,10 @@ export function createNoladius<
   State extends object = {},
   Params extends object = {},
   Actions extends Action = Action
->(tasks, options?: NoladiusOptions): NoladiusConstructor<State, Params, Actions> {
+>(
+  tasks: Array<FunctionalTask | TaskConstructor | NoladiusConstructor>,
+  options?: NoladiusOptions,
+): NoladiusConstructor<State, Params, Actions> {
   return class extends Noladius<State, Params, Actions> {
     constructor(context?: Noladius<State, Params, Actions>, newOptions?: NoladiusOptions, params?: Params, initialState?: State) {
       const finalOptions = {

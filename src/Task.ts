@@ -2,6 +2,7 @@ import Noladius from './Noladius'
 import { StoreChanger } from './Store'
 import NoladiusConstructor from './NoladiusConstructor'
 import { Action, EventsDispatch } from './Events'
+import TaskConstructor from './TaskConstructor'
 
 export type TaskReturnValue<
   State extends object = object,
@@ -75,10 +76,12 @@ abstract class Task<
   }
 
   protected get params(): Params {
+    const constructor = this.constructor as TaskConstructor
+
     return {
-      ...this.constructor['defaultParams'],
+      ...constructor.defaultParams,
       ...this.context.params as object,
-    }
+    } as Params
   }
 
   protected dispatch(action: Actions) {

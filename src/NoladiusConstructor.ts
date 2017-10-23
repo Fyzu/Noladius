@@ -14,6 +14,8 @@ type NoladiusConstructor<
   ): Noladius<State, Params, Actions>
 
   defaultParams: object
+
+  defaultOptions: object
 }
 
 export default NoladiusConstructor
