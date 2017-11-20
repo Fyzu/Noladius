@@ -1,17 +1,17 @@
 export type StoreListener<State extends object = object> = (state: State) => void
 
 export default function createStore<State extends object = object>(initialState: State) {
-  return new Store(initialState)
+  return new Store<State>(initialState)
 }
 
-export type StoreChanger<State extends object = object> = object | ((state: State) => object)
+export type StoreChanger<State extends object = object> = Partial<State> | ((state: State) => Partial<State>)
 
 export class Store<State extends object = object> {
   private state: State
   private listeners: StoreListener<State>[]
 
   constructor(initialState: State = {} as State) {
-    this.state = initialState
+    this.state = initialState as State
     this.listeners = []
   }
 

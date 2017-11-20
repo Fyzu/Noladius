@@ -57,11 +57,11 @@ abstract class Noladius<
 
   public didRun?(): void
 
-  public get state(): State {
+  public get state(): Partial<State> {
     return this.store.getState()
   }
 
-  public set state(state: State) {
+  public set state(state: Partial<State>) {
     this.store.setState(state)
   }
 
